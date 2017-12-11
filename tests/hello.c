@@ -1,24 +1,9 @@
-#include "stdio.h"
+void msn( ) {
+    int a,
+        b,
+            c,
+        d;
+    msn();
 
-int main(int a)
-{
-    if (a())
-    if (b()) ;
-    if (a())
-    if (b()) ;
 
-    if (bla()) {
-    if (ble())
-    echo();
-    }
-
-    switch (3) {
-    case 3:
-    dfddd();
-    for (;;) ;
-
-    if (3) {
-    echo();
-    }
-    }
 }
