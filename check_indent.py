@@ -12,10 +12,11 @@ Config.set_library_file('/usr/lib/x86_64-linux-gnu/libclang-5.0.so.1')
 
 class CheckIndent(object):
     # pylint: disable=R0902
-    def __init__(self, filename, use_tab, tab_length):
+    def __init__(self, filename, use_tab, tab_length, syntax_errror):
         self.tab_length = tab_length
         self.use_tab = use_tab
         self.filename = filename
+        self.syntax_error = syntax_errror
         self.notes = []
         with open(filename) as f:
             self.line_texts = [txt.rstrip() for txt in f] # strip \n
@@ -54,7 +55,8 @@ class CheckIndent(object):
         # ignore include errors
         if cat_number == 1 and desc.find('file not found'):
             return True
-        self.add_note(pos, excerpt, desc, severity)
+        if self.syntax_error:
+            self.add_note(pos, excerpt, desc, severity)
         return s != Diagnostic.Fatal
 
     def add_note(self, position, excerpt, description=None, severity='warning'):
@@ -211,23 +213,24 @@ class CheckIndent(object):
         #     print(l, first_col[l])
 
         if self.use_tab:
-            rexp = r'^\t*? '
+            rexp = r'^(\t*)( +)'
             msg = 'Uso de espaço ao invés de tab'
         else:
-            rexp = r'^ *\t'
+            rexp = r'(^ *)(\t+)'
             msg = 'Uso de tab ao invés de espaço'
         for line, txt in enumerate(self.line_texts):
             m = re.match(rexp, txt)
             if m:
-                col = len(m.group(0))
+                col = len(m.group(1)) + 1
+                len_offending = len(m.group(2))
                 # if space is not in a comment
                 if first_col[line] == -1 or first_col[line] > col:
                     # print(line, first_col[line], col)
-                    pos = [[line, col], [line, col + 1]]
+                    pos = [[line, col], [line, col + len_offending]]
                     f = self.tu.get_file(self.filename)
-                    a = SourceLocation.from_position(self.tu, f, line, col)
-                    b = SourceLocation.from_position(self.tu, f, line+1, 1)
-                    r = SourceRange.from_locations(a, b)
+                    # a = SourceLocation.from_position(self.tu, f, line, col)
+                    # b = SourceLocation.from_position(self.tu, f, line + len_offending, 1)
+                    # r = SourceRange.from_locations(a, b)
                     # print([t.spelling for t in toks])
                     self.add_note(pos, msg)
 
@@ -350,9 +353,10 @@ def main():
     parser = argparse.ArgumentParser(description='Verifica indentação')
     parser.add_argument('-t', dest='use_tabs', action='store_true', help='Indentação com tabs')
     parser.add_argument('-s', dest='use_spaces', action='store_true', help='Indentação com espaços')
+    parser.add_argument('-o', dest='syntax_errror', action='store_false', help='Omite erros de sintaxe do clang')
     parser.add_argument('filename', metavar='arquivo.c', help='Nome do arquivo .c ou .h')
     parser.add_argument('-l', dest='tab_length', type=int, default=4, help='Tamanho da tabulação (padrão 4)')
-    parser.add_argument('-j', dest='json_output', action='store_true', help='Saída em formato json')
+    parser.add_argument('-j', dest='json_output', action='store_true', help='Saída em formato json para linter do atom')
     parser.add_argument('-d', dest='debug', action='store_true', help='Debug')
     args = parser.parse_args()
 
@@ -367,13 +371,12 @@ def main():
         print("Utilize -s ou -t; não ambos")
         return
 
-
-    checker = CheckIndent(args.filename, args.use_tabs, args.tab_length)
+    checker = CheckIndent(args.filename, args.use_tabs, args.tab_length, args.syntax_errror)
     if not args.use_tabs and not args.use_spaces:
         checker.detect_indent_type()
         kind = 'tabs' if checker.use_tab else 'espaços'
         if not args.json_output:
-            print("Utilizando indentação com", kind, "\n")
+            print("Indentação detectada como usando", kind, "\n")
     if DEBUG:
         checker.dump_ast()
     checker.check_indent()
@@ -381,11 +384,11 @@ def main():
     # print(checker.notes)
     checker.sort_notes()
     if args.json_output:
-        # convert indices
+        # convert indices to atom format
         for n in checker.notes:
             for i in range(2):
                 line, col = n['location']['position'][i]
-                n['location']['position'][i] = [line -1 , col -1]
+                n['location']['position'][i] = [line -1, col -1]
         print(json.dumps(checker.notes))
     else:
         checker.print_notes(3)

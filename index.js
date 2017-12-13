@@ -36,7 +36,7 @@ export function provideLinter() {
             // if (this.disableTimeout) {
             //   execOpts.timeout = Infinity;
             // }
-            const useTabs = !editor.usesSoftTabs();
+            const useTabs = !editor.getSoftTabs();
             l('usetabs', useTabs)
             const tabLength = editor.getTabLength()
             const filePath = editor.getPath();
