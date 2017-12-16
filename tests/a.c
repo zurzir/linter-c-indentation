@@ -1,7 +1,9 @@
 //#include <stdio.h>
 
-int main(){
+struct {
+
+};
 
 printf("Hello World!");
-    return 0;
+return 0;
 }

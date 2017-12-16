@@ -1,12 +1,15 @@
-void msn( )
-	{
+#include <stdio.h>
+#include "hello.h"
 
+void msn( )
+{
 	int a,
 		b,
 					c,
 					d;
 	msn();
-	if (3) msn();
+				if (0) msn();
 
-	for (;;) print();
+	for (;;)
+		printf("dd");
 }
