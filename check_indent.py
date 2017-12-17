@@ -55,7 +55,7 @@ class CheckIndent(object):
         if from_loc.file.name != from_loc.file.name:
             to_tok = from_loc
         return {
-            'filename': from_loc.file.name,
+            'file': from_loc.file.name,
             'position': [
                 [from_loc.line, from_loc.column],
                 [to_tok.line, to_tok.column + add_len]
@@ -242,6 +242,7 @@ class CheckIndent(object):
             self.visit(c, n, cursor, toks, block_level)
             n += 1
 
+    # pylint: disable=R0914
     def check_tabs(self):
         # stores the first col which is a comment at each line
         first_col = [-1]*len(self.line_texts)
@@ -254,6 +255,7 @@ class CheckIndent(object):
             # only cares about tokens in the current file
             if t.location.file.name != self.filename:
                 continue
+            # pylint: disable=E1101
             if t.kind == TokenKind.COMMENT:
                 ls = t.extent.start.line
                 cs = t.extent.start.column
@@ -280,7 +282,7 @@ class CheckIndent(object):
                 # if the offending whitespace is not in a comment
                 if first_col[line] == -1 or first_col[line] > col:
                     location = {
-                        'filename': self.filename,
+                        'file': self.filename,
                         'position': [[line, col], [line, col + len_offending]]
                     }
                     self.add_note(location, msg)
@@ -337,6 +339,7 @@ class CheckIndent(object):
 
                 # if this is a "case" of a SWITCH_STMT,
                 # we allow indenting or not indenting the "case" keyword
+                # pylint: disable=E1101
                 if tok.kind == TokenKind.KEYWORD and \
                         tok.spelling == 'case' and \
                         indent == suggested + 1:
@@ -377,7 +380,7 @@ class CheckIndent(object):
                     break
 
                 location = {
-                    'filename': self.filename,
+                    'file': self.filename,
                     'position': [
                         [line, 1],
                         [line, tok.location.column]
@@ -398,7 +401,7 @@ class CheckIndent(object):
         m_last_line = [-1]
 
         def print_note(note):
-            if note['location']['filename'] != self.filename:
+            if note['location']['file'] != self.filename:
                 print(note)
                 return
             start, end = note['location']['position']
