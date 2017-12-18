@@ -5,7 +5,8 @@
 #include <stdio.h>
 
 int main() {
-    for (;;){
+    for (;;)
+    {
 
     }
     ;
@@ -24,13 +25,14 @@ int main() {
                             if (3)
                                 printf("b")
                             else if (34)
-                                df}
+                                df;
+                    }
+                    else
+                        do {
 
-                            else
-                                do {
-
-                                } while(3);
+                        } while(3);
+    for (;;);
     while(s) {
 
-    };
+            };
 }

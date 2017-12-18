@@ -1,7 +1,12 @@
 'use babel';
 
 // const l = console.log;
-const grammar = atom.grammars.grammarForScopeName('source.c');
+var grammar;
+
+export function activate() {
+    grammar = atom.grammars.grammarForScopeName('source.c');
+    // l('loaded');
+}
 
 function inScope(tok, scope) {
     for (let s of tok.scopes) {
@@ -376,9 +381,8 @@ function checkIndent(filePath, useTabs, tabLength, text) {
             }
         }
 
-
-        // checks reamaining spaces
-        if (remaining_spaces > 0) {
+        // checks remaining spaces
+        if (indent_level == suggest_indent && remaining_spaces > 0) {
             loc = makeLocation(toks,
                 {'line': line, 'i': 0},
                 {'line': line, 'i': 0},
@@ -414,7 +418,7 @@ export function provideLinter() {
     return {
         name: 'Indentação',
         scope: 'file',
-        lintsOnChange: false,
+        lintsOnChange: true,
         grammarScopes: ['source.c'],
         lint: async (editor) => {
             let filePath = editor.getPath();
