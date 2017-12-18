@@ -21,9 +21,14 @@ class CheckIndent(object):
         self.notes = []
 
         # read file content
-        with open(filename) as f:
-            self.line_texts = [txt.rstrip('\r\n') for txt in f]
-        self.line_texts.insert(0, '') # make indices correpond to real lines numbers
+        for enc in ['utf8', 'latin-1']:
+            try:
+                with open(filename, encoding=enc) as f:
+                    self.line_texts = [txt.rstrip('\r\n') for txt in f]
+                self.line_texts.insert(0, '') # make indices correpond to real lines numbers
+                break
+            except:
+                pass
 
         # clang parsing
         self.index = Index.create()
@@ -51,14 +56,14 @@ class CheckIndent(object):
     @staticmethod
     def make_location(from_loc, to_loc=None, add_len=0):
         if to_loc is None:
-            to_tok = from_loc
-        if from_loc.file.name != from_loc.file.name:
-            to_tok = from_loc
+            to_loc = from_loc
+        if from_loc.file.name != to_loc.file.name:
+            to_loc = from_loc
         return {
             'file': from_loc.file.name,
             'position': [
                 [from_loc.line, from_loc.column],
-                [to_tok.line, to_tok.column + add_len]
+                [to_loc.line, to_loc.column + add_len]
             ]
         }
 
@@ -66,7 +71,7 @@ class CheckIndent(object):
     @staticmethod
     def make_location_from_tok(from_tok, to_tok=None):
         add_len = 0
-        if to_tok is not None:
+        if to_tok is None:
             to_tok = from_tok
         return CheckIndent.make_location(from_tok.location, to_tok.location, add_len)
 
@@ -127,13 +132,13 @@ class CheckIndent(object):
                 tab_level += 1
             else:
                 break
-        return tab_level, space_level
+        return tab_level, space_level, space_in_a_row
 
 
     def detect_indent_type(self):
         tab_lines = space_lines = 0
         for text in self.line_texts:
-            t, s = self._get_line_indent_level(text)
+            t, s, _ = self._get_line_indent_level(text)
             if t > s:
                 tab_lines += 1
             elif t < s:
@@ -142,14 +147,17 @@ class CheckIndent(object):
 
 
     def get_line_indent_level(self, text):
-        tab_level, space_level = self._get_line_indent_level(text)
-        return tab_level + space_level
+        tab_level, space_level, remaining_spaces = self._get_line_indent_level(text)
+        return tab_level + space_level, remaining_spaces
 
 
     def _dump_ast(self, cursor, level):
-        print(' '*level, cursor.kind)
+        if cursor.location.file is not None and \
+                cursor.location.file.name == self.filename:
+            print(' '*level, cursor.kind, cursor.spelling)
         for c in cursor.get_children():
             self._dump_ast(c, level + 1)
+
 
     def dump_ast(self):
         self._dump_ast(self.tu.cursor, 0)
@@ -161,6 +169,8 @@ class CheckIndent(object):
         a token, and cursor info associated with the reason of the level
         """
         for t in toks:
+            if t.location.file.name != self.filename:
+                continue
             loc = self.make_loc(t)
             self.tokens.setdefault(loc, t)
             self.cursor_info[loc] = info
@@ -219,10 +229,8 @@ class CheckIndent(object):
 
         # declarations like "unsigned int var1, var2, ..."
         elif kind == CursorKind.DECL_STMT:
-            # does not indent first token
-            self.update_toks_level(toks[:1], {'cursor': cursor, 'n_child': n_child, 'first_tok': True}, block_level)
-            block_level += 1
-            self.update_toks_level(toks[1:], {'cursor': cursor, 'n_child': n_child, 'first_tok': False}, block_level)
+            # does not indent, but store info
+            self.update_toks_level(toks, {'cursor': cursor}, block_level)
 
         # other cases for indentation
         elif p_kind in [CursorKind.IF_STMT,
@@ -232,7 +240,9 @@ class CheckIndent(object):
                         CursorKind.SWITCH_STMT,
                         CursorKind.PAREN_EXPR,
                         CursorKind.INIT_LIST_EXPR,
-                        CursorKind.FUNCTION_DECL]:
+                        CursorKind.FUNCTION_DECL,
+                        CursorKind.STRUCT_DECL,
+                        CursorKind.ENUM_DECL]:
             block_level += 1
             self.update_toks_level(toks, {'cursor': parent, 'n_child': n_child}, block_level)
 
@@ -260,6 +270,7 @@ class CheckIndent(object):
                 ls = t.extent.start.line
                 cs = t.extent.start.column
                 le = t.extent.end.line
+
                 # update the line at which the token starts
                 update_first_col(ls, cs)
                 # update the other lines through  which the token spans
@@ -326,21 +337,28 @@ class CheckIndent(object):
             if txt.strip() == '':
                 continue
 
-            indent = self.get_line_indent_level(txt)
+            indent, remaining_spaces = self.get_line_indent_level(txt)
             suggested = last_indent + difs[line]
-            report_error = suggested != indent
+            report_error = suggested != indent or remaining_spaces > 0
 
             # for is like an if, but we can break
             run_list = ['once'] if report_error else []
             for _ in run_list:
                 loc = first_locs[line]
+
+                # if loc is None, and this line is not empty,
+                # then there is the continuation of a comment in here
+                if loc is None:
+                    report_error = False
+                    break
+
                 tok = self.tokens[loc]
                 info = self.cursor_info[loc]
 
                 # if this is a "case" of a SWITCH_STMT,
                 # we allow indenting or not indenting the "case" keyword
                 # pylint: disable=E1101
-                if tok.kind == TokenKind.KEYWORD and \
+                if tok and tok.kind == TokenKind.KEYWORD and \
                         tok.spelling == 'case' and \
                         indent == suggested + 1:
                     indent = suggested
@@ -348,10 +366,12 @@ class CheckIndent(object):
                     break
 
                 # when indentation is larger than suggested, then ignore in some cases
-                if indent > suggested:
-                    k = info['cursor'].kind
+                if indent > suggested or remaining_spaces > 0:
                     ok = False
-                    if k in [CursorKind.IF_STMT, CursorKind.WHILE_STMT, CursorKind.SWITCH_STMT]:
+                    k = info['cursor'].kind if tok else None
+                    if not tok: # is a comment
+                        ok = True
+                    elif k in [CursorKind.IF_STMT, CursorKind.WHILE_STMT, CursorKind.SWITCH_STMT]:
                         # if tok is in the  "condition"
                         ok = info['n_child'] == 1
                     elif k == CursorKind.FOR_STMT:
@@ -367,7 +387,7 @@ class CheckIndent(object):
                     elif k in [CursorKind.PAREN_EXPR, CursorKind.INIT_LIST_EXPR]:
                         ok = True
                     elif k == CursorKind.DECL_STMT:
-                        ok = not info['first_tok']
+                        ok = True
                     if ok:
                         indent = suggested
                         report_error = False
@@ -386,8 +406,13 @@ class CheckIndent(object):
                         [line, tok.location.column]
                     ]
                 }
-                desc = 'Está indentado em %d níveis, mas era melhor com %d níveis. Corrija todo o bloco que segue!' % (indent, suggested)
-                self.add_note(location, 'Indentaçãoo errada', desc)
+                if remaining_spaces > 0:
+                    desc = 'Remova {} espaços dessa linha'.format(remaining_spaces)
+                    self.add_note(location, 'Espaços a mais', desc)
+
+                if indent != suggested:
+                    desc = 'Está indentado em %d níveis, mas era melhor com %d níveis. Corrija todo o bloco que segue!' % (indent, suggested)
+                    self.add_note(location, 'Indentaçãoo errada', desc)
                 report_error = True
 
             last_reported = report_error

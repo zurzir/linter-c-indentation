@@ -1,17 +1,14 @@
 #include "asds"
 
-
-
-#define bla asdf\asdf{
-
 int f() {
     bla
-{
-    switch (var() == 3) {
+    {
+        switch (var() == 3) {
         case 3:
-        print();
+            print();
         case 4:
-        as();
-        b();
+            as();
+            b();
+        }
     }
 }

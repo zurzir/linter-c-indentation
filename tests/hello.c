@@ -1,15 +1,26 @@
-#include <stdio.h>
-#include "hello.h"
+if (asdf)
+    if (asdf) {
+        for () {
+            asdf
+            x = (
+                    (
+                    d)
+                    )
+        }
+        if (asdf)
+            asdf;
+    }
+else
+    for (asdf) {
+        /*
+        */
+        if (asdf)
+            if (asdf)
+                // last
+                asdf;
+    }
 
-void msn( )
-{
-	int a,
-		b,
-					c,
-					d;
-	msn();
-				if (0) msn();
-
-	for (;;)
-		printf("dd");
+switch (3) {
+case df:
+    df;
 }
