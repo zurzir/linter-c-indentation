@@ -1,21 +1,58 @@
 {
     "name": "linter-simple-format",
-    "main": "index.js",
+    "main": "./index.js",
     "version": "0.0.0",
-    "private": true,
     "description": "Linter para indentação inválida",
     "keywords": [
         "linter",
         "indentation"
     ],
+    "repository": "none",
+    "license": "MIT",
     "engines": {
-        "atom": ">=1.4.0 <2.0.0"
+        "atom": ">=1.0.0 <2.0.0"
+    },
+    "dependencies": {
+        "atom-linter": "^10.0.0"
     },
     "providedServices": {
         "linter": {
             "versions": {
                 "2.0.0": "provideLinter"
             }
+        }
+    },
+    "eslintConfig": {
+        "globals": {
+            "atom": "true"
+        },
+        "env": {
+            "browser": true,
+            "es6": true
+        },
+        "extends": "eslint:recommended",
+        "parserOptions": {
+            "sourceType": "module",
+            "ecmaVersion": 8
+        },
+        "rules": {
+            "indent": [
+                "error",
+                4
+            ],
+            "linebreak-style": [
+                "error",
+                "unix"
+            ],
+            "quotes": [
+                "error",
+                "single"
+            ],
+            "semi": [
+                "error",
+                "always"
+            ],
+            "no-console": "off"
         }
     }
 }

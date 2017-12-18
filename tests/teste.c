@@ -1,54 +1,36 @@
 #include <stdio.h>
-
-void funct()
+ blas
+   df
+int main(dfasd
+	sdfç ;
+)
 {
-	if (1 == 3)
-		print("falso");
-	s;
-
-	for (int i = 0; i < 10; i++) {
-		if (dfd)
-		{
-
-		};
-
-	}
-	//dfd
-
-	if (a)
-		b;
-	else if (d)
-		c;
-	df;
-
-
-	print("espaços antes");
-
-	for (int i = 0; i < 3; i++) {
-
-		while(1) {
-			printf("misturado");
-			printf("misturado de novo");
-			printf("so espaços");
-		 	printf("so tabs");
-			printf("atrás");
-			printf("ok")
-			printf("frente");
-		}
-	}
-}
-
-int main() {
-	// comenta início
-	print("não aumenta bloco")
-
-	// comentário ok
-	printf("com");
-
-	if (1)
+	tipo asd, df ;
+	struct a {
+		int b;
+		int c;
+	}  d;
+	int a, b,
 		d;
+	/*
+	dfdf*/
+	// df
+	int r = 0;
+	for (1)
+		if (2) { //  aq
+			for (;;)
+				if (0)
+					r = 1;
+				else if (as)
+					r = 2;
+				else
+					df;
+		} // fim
+	printf("%d\n", r);
+	return 0;
 
-	// comentário não ok
-	printf("dd")
-
+	switch (3) {
+		case 3:
+		prin();
+	}
 }
