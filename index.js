@@ -1,6 +1,6 @@
 'use babel';
 
-// const l = console.log;
+const l = console.log;
 var grammar;
 
 export function activate() {
@@ -257,7 +257,7 @@ function checkIndent(filePath, useTabs, tabLength, text) {
             }
 
             // condition
-            if (inScope(t, 'keyword') && s == 'case') {
+            if (inScope(t, 'keyword') && ['default','case'].includes(s)) {
                 tok_level -= 1;
             } else if (inScope(t, 'keyword')
                 && ['if', 'while', 'for', 'else', 'do', 'switch'].includes(s))
@@ -339,6 +339,7 @@ function checkIndent(filePath, useTabs, tabLength, text) {
 
     // check each line
     var last_indent_level = 0;
+    var last_reported = false; // do not report errors for consecutive lines
     last_lev = 0;
     for (line = 0; line < lines.length; line++) {
         let txt = lines[line];
@@ -353,6 +354,10 @@ function checkIndent(filePath, useTabs, tabLength, text) {
         // calculates suggested and real indent
         let { indent_level, remaining_spaces } = get_line_indent_level(txt, tabLength);
         var suggest_indent = diff + last_indent_level;
+
+        // this makes thing less worse...
+        if (suggest_indent < 0)
+            suggest_indent = 0;
         last_indent_level = indent_level;
         // l(`${line+1} ${levs[line]} ${diff}: ${suggest_indent} -- ${indent_level}|${txt}`);
 
@@ -381,36 +386,54 @@ function checkIndent(filePath, useTabs, tabLength, text) {
             }
         }
 
+        // allow expressions in parent to be more indented
+        if (indent_level > suggest_indent && info['inparen']) {
+            last_indent_level = suggest_indent;
+            last_reported = false;
+            continue;
+        }
+
         // checks remaining spaces
-        if (indent_level == suggest_indent && remaining_spaces > 0) {
+        if (remaining_spaces > 0) {
             loc = makeLocation(toks,
                 {'line': line, 'i': 0},
                 {'line': line, 'i': 0},
                 filePath);
-            notes.push(makeNote(loc, 'Espaços a mais',
-                `Remova ${remaining_spaces} espaços dessa linha`));
+            var dels = tabLength*(indent_level - suggest_indent) + remaining_spaces;
+            var action_txt;
+            if (dels > 0)
+                action_txt = `Remova ${dels} espaço(s) dessa linha.`;
+            else
+                action_txt = `Insira ${-dels} espaços nessa linha.`;
+            notes.push(makeNote(loc, 'Número de espaços ruim',
+                `O número de espaços não é múltiplo da largura\
+                do tab. ${action_txt}`));
         }
 
         // if everything is ok, continues
-        if (indent_level == suggest_indent)
+        if (indent_level == suggest_indent) {
+            last_reported = false;
             continue;
+        }
 
-
-        // allow expressions in parent to be more indented
-        if (indent_level > suggest_indent && info['inparen']) {
-            last_indent_level = suggest_indent;
+        // easy down on the error reporting:
+        // this allows that an indentation error on a single
+        // line be reported only once
+        if (last_reported) {
+            last_reported = false;
             continue;
         }
 
         // adds note
-        // l('erro');
         loc = makeLocation(toks, {'line': line, 'i': 0}, first_tok, filePath);
         notes.push(makeNote(
             loc, 'Mal indentado',
             `Está indentado em ${indent_level} níveis, mas era\
              melhor com ${suggest_indent} níveis. Corrija todo\
              o bloco que segue!`));
+        last_reported = true;
     }
+    // l('fez', Math.random());
     return notes;
 }
 
