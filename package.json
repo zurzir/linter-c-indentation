@@ -1,14 +1,15 @@
 {
     "name": "linter-simple-format",
-    "main": "./index.js",
+    "main": "./index",
     "version": "0.0.0",
     "description": "Linter para indentação inválida em C",
     "keywords": [
         "linter",
         "indentation"
     ],
+    "activationHooks": [ "language-c:grammar-used" ],
     "repository": "none",
-    "license": "MIT",
+    "license": "GPL",
     "engines": {
         "atom": ">=1.0.0 <2.0.0"
     },

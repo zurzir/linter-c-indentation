@@ -1,11 +1,11 @@
 'use babel';
 
+// eslint-disable-next-line
 const l = console.log;
 var grammar;
 
 export function activate() {
     grammar = atom.grammars.grammarForScopeName('source.c');
-    // l('loaded');
 }
 
 function inScope(tok, scope) {
@@ -276,7 +276,7 @@ function checkIndent(filePath, useTabs, tabLength, text) {
                         notes.push(makeNote(loc, 'Uso de "else if"',
                             'Você está usando uma construção "else if";\
                             mas o "if" está sozinho; seria mais claro\
-                            colocar o "if" logo depois "else" na\
+                            colocar o "if" logo depois do "else" na\
                             mesma linha'
                         ));
                     }
@@ -294,7 +294,7 @@ function checkIndent(filePath, useTabs, tabLength, text) {
                     notes.push(makeNote(loc, 'Condições aninhadas',
                         `Você está colocando um comando "${s}" como bloco de \
                          outro comando "${last_cond}".\
-                         Use "${last_cond}" ${txt_parent}{ "${s}" (...) ... } \
+                         Revise o código e se for isso mesmo que você quer, use "${last_cond}" ${txt_parent}{ "${s}" (...) ... } \
                          para ficar mais claro.`));
                 }
 
@@ -368,13 +368,17 @@ function checkIndent(filePath, useTabs, tabLength, text) {
 
         // checks tab/space
         if (!inScope(t, 'comment')) {
-            var msg, rexp;
+            var msg, desc, rexp;
             if (useTabs) {
                 rexp = /^(\t*)( +)/;
                 msg = 'Uso de espaço ao invés de tab';
+                desc = 'O editor está configurado para usar tabs,\
+                        mas essa linha contém espaços como indentação.';
             } else {
                 rexp = /(^ *)(\t+)/;
                 msg = 'Uso de tab ao invés de espaço';
+                desc = 'O editor está configurado para usar espaços,\
+                        mas essa linha contém tabs como indentação.';
             }
             var m = rexp.exec(txt);
             if (m !== null) {
@@ -382,7 +386,7 @@ function checkIndent(filePath, useTabs, tabLength, text) {
                     {'line': line, 'i': 0},
                     {'line': line, 'i': 0},
                     filePath);
-                notes.push(makeNote(loc, msg));
+                notes.push(makeNote(loc, msg, desc));
             }
         }
 
