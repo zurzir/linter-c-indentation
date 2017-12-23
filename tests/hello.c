@@ -4,12 +4,12 @@ if (asdf)
             asdf
             x = (
                     (
-                    d)
+                                d)
                     )
-        }
+                }
         if (asdf)
             asdf;
-    }
+        }
 else
     for (asdf) {
         /*

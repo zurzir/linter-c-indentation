@@ -67,14 +67,12 @@ class CheckIndent(object):
             ]
         }
 
-
     @staticmethod
     def make_location_from_tok(from_tok, to_tok=None):
         add_len = 0
         if to_tok is None:
             to_tok = from_tok
         return CheckIndent.make_location(from_tok.location, to_tok.location, add_len)
-
 
     def add_clang_diag(self, diagnostic: Diagnostic):
         # collects info
@@ -247,7 +245,7 @@ class CheckIndent(object):
             self.update_toks_level(toks, {'cursor': parent, 'n_child': n_child}, block_level)
 
         # visit recursively each children in order
-        n = 1 # chiled num
+        n = 1  # chiled num
         for c in cursor.get_children():
             self.visit(c, n, cursor, toks, block_level)
             n += 1
@@ -255,7 +253,7 @@ class CheckIndent(object):
     # pylint: disable=R0914
     def check_tabs(self):
         # stores the first col which is a comment at each line
-        first_col = [-1]*len(self.line_texts)
+        first_col = [-1] * len(self.line_texts)
 
         def update_first_col(line, col):
             if first_col[line] == -1 or first_col[line] > col:
@@ -301,7 +299,7 @@ class CheckIndent(object):
     def _get_diff_first_loc(self):
         # calculates the relative difference in indentation between two lines
         # we consider there a mistake has happen only if this difference is not assured
-        difs = [0]*len(self.line_texts)
+        difs = [0] * len(self.line_texts)
         first_locs = [None] * len(self.line_texts)
         last_lev = 0
         last_line = 0
@@ -331,8 +329,8 @@ class CheckIndent(object):
         difs, first_locs = self._get_diff_first_loc()
 
         # check indentation
-        last_indent = 0 # indentation at last line
-        last_reported = False # keep track of last error (do not report consecutive indentation errors)
+        last_indent = 0  # indentation at last line
+        last_reported = False  # keep track of last error (do not report consecutive indentation errors)
         for line, txt in enumerate(self.line_texts):
             if txt.strip() == '':
                 continue
@@ -451,7 +449,6 @@ class CheckIndent(object):
 
         for n in self.notes:
             print_note(n)
-
 
     def sort_notes(self):
         self.notes = sorted(self.notes, key=lambda n: n['location']['position'][0])
