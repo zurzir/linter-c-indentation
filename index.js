@@ -238,19 +238,21 @@ function checkIndent(filePath, useTabs, tabLength, text) {
                         paren -= 1;
 
                         // this ")" closes the condition
-                        // and the statement is empty
-                        var nt = nextToken(toks,line,i);
-                        var last_cond = cond_last();
-                        // l(line + 1, 'empty_block', cond_num(), last_cond, nt.value);
-                        if (nt !== null
-                             && nt.value == ';'
-                             && ['if', 'while', 'for', 'else', 'switch'].includes(last_cond))
-                        {
-                            var loc = makeLocation(toks,{line,i}, {line,i},filePath);
-                            notes.push(makeNote(loc, 'Bloco vazio',
-                                `O comando "${last_cond}" contém\
-                                um bloco vazio; todos os comandos depois de ";"\
-                                não fazem parte do "${last_cond}" correpondente.`));
+                        if (paren == 0) {
+                            // and the statement is empty
+                            var nt = nextToken(toks,line,i);
+                            var last_cond = cond_last();
+                            // l(line + 1, 'empty_block', cond_num(), last_cond, nt.value);
+                            if (nt !== null
+                                 && nt.value == ';'
+                                 && ['if', 'while', 'for', 'else', 'switch'].includes(last_cond))
+                            {
+                                var loc = makeLocation(toks,{line,i}, {line,i},filePath);
+                                notes.push(makeNote(loc, 'Bloco vazio',
+                                    `O comando "${last_cond}" contém\
+                                    um bloco vazio; todos os comandos depois de ";"\
+                                    não fazem parte do "${last_cond}" correpondente.`));
+                            }
                         }
                     }
                 }
