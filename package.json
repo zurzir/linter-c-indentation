@@ -8,7 +8,7 @@
         "indentation"
     ],
     "activationHooks": [ "language-c:grammar-used" ],
-    "repository": "none",
+    "repository": "https://github.com/zurzir/linter-c-indentation",
     "license": "GPL",
     "engines": {
         "atom": ">=1.0.0 <2.0.0"
