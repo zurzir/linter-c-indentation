@@ -1,56 +1,58 @@
 {
-    "name": "linter-c-indentation",
-    "main": "./index",
-    "version": "0.0.1",
-    "description": "Linter para indentação inválida em C destinado a programadores iniciantes",
-    "keywords": [
-        "linter",
-        "indentation"
-    ],
-    "activationHooks": [ "language-c:grammar-used" ],
-    "repository": "https://github.com/zurzir/linter-c-indentation",
-    "license": "GPL",
-    "engines": {
-        "atom": ">=1.0.0 <2.0.0"
-    },
-    "providedServices": {
-        "linter": {
-            "versions": {
-                "2.0.0": "provideLinter"
-            }
-        }
-    },
-    "eslintConfig": {
-        "globals": {
-            "atom": "true"
-        },
-        "env": {
-            "browser": true,
-            "es6": true
-        },
-        "extends": "eslint:recommended",
-        "parserOptions": {
-            "sourceType": "module",
-            "ecmaVersion": 8
-        },
-        "rules": {
-            "indent": [
-                "error",
-                4
-            ],
-            "linebreak-style": [
-                "error",
-                "unix"
-            ],
-            "quotes": [
-                "error",
-                "single"
-            ],
-            "semi": [
-                "error",
-                "always"
-            ],
-            "no-console": "off"
-        }
+  "name": "linter-c-indentation",
+  "main": "./index",
+  "version": "0.1.0",
+  "description": "Linter para indentação inválida em C destinado a programadores iniciantes",
+  "keywords": [
+    "linter",
+    "indentation"
+  ],
+  "activationHooks": [
+    "language-c:grammar-used"
+  ],
+  "repository": "https://github.com/zurzir/linter-c-indentation",
+  "license": "GPL",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  },
+  "providedServices": {
+    "linter": {
+      "versions": {
+        "2.0.0": "provideLinter"
+      }
     }
+  },
+  "eslintConfig": {
+    "globals": {
+      "atom": "true"
+    },
+    "env": {
+      "browser": true,
+      "es6": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+      "sourceType": "module",
+      "ecmaVersion": 8
+    },
+    "rules": {
+      "indent": [
+        "error",
+        4
+      ],
+      "linebreak-style": [
+        "error",
+        "unix"
+      ],
+      "quotes": [
+        "error",
+        "single"
+      ],
+      "semi": [
+        "error",
+        "always"
+      ],
+      "no-console": "off"
+    }
+  }
 }
