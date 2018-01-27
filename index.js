@@ -323,7 +323,7 @@ function checkIndent(filePath, useTabs, tabLength, text) {
             if (!first_tok_info[line]) {
                 first_tok_info[line] = {
                     'tok': {line, i},
-                    'inparen': num_paren > 0 || closing_par
+                    'inparen': (num_paren == 1 && s != '(') || num_paren > 1 || closing_par// check if the first tok is inside a paren exp
                 };
             }
         }

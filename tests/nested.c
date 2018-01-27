@@ -82,3 +82,27 @@ int main() {
 
         };
 }
+
+if (str[*pos] != '(')
+    return 0;
+(*pos)++;
+
+if (!expressao(str, pos))
+    return 0;
+if (str[*pos] != ’)’)
+return 0;
+(*pos)++;
+return 1;
+}
+if (!expressao(str, pos)) return 0;
+if (str[*pos] != ’)’)
+
+
+if (a) return;
+if (b) {
+
+}
+}
+
+// inicia com (
+    (*pos)++;
