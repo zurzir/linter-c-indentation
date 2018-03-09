@@ -1,7 +1,7 @@
 {
   "name": "linter-c-indentation",
   "main": "./index",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Linter para indentação inválida em C destinado a programadores iniciantes",
   "keywords": [
     "linter",
