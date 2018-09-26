@@ -392,7 +392,7 @@ function checkIndent(filePath, useTabs, tabLength, text) {
             }
         }
 
-        // allow expressions in parent to be more indented
+        // allow expressions in parentheses to be more indented
         if (indent_level > suggest_indent && info['inparen']) {
             last_indent_level = suggest_indent;
             last_reported = false;
@@ -428,6 +428,15 @@ function checkIndent(filePath, useTabs, tabLength, text) {
         if (last_reported) {
             last_reported = false;
             continue;
+        }
+
+        // allows comment to be over indented, if it ends a block
+        if (inScope(t, 'comment') && nextTokIs(toks, first_tok.line, first_tok.i,'}')) {
+            // could be overindent by one level
+            if(indent_level == suggest_indent + 1) {
+                last_indent_level--;
+                continue;
+            }
         }
 
         // adds note

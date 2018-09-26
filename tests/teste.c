@@ -33,4 +33,9 @@ int main(dfasd
 		case 3:
 		prin();
 	}
+
+	if (elemento[0] == '(') {
+	//
+	} else if (elemento[0] == ')') {
+	}
 }
