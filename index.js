@@ -5,7 +5,11 @@ const l = console.log;
 var grammar;
 
 export function activate() {
-    grammar = atom.grammars.grammarForScopeName('source.c');
+    // FIXME: Usa o registro das gramáticas do texmate
+    if (typeof(atom.grammars.textmateRegistry) === "undefined")
+        grammar = atom.grammars.grammarForScopeName('source.c');
+    else
+        grammar = atom.grammars.textmateRegistry.grammarForScopeName('source.c');
 }
 
 function inScope(tok, scope) {
@@ -400,7 +404,7 @@ function checkIndent(filePath, useTabs, tabLength, text) {
         }
 
         // checks remaining spaces
-        if (remaining_spaces > 0) {
+        if (remaining_spaces > 0 && (!inScope(t, 'comment') || t.value.startsWith('//'))) {
             loc = makeLocation(toks,
                 {'line': line, 'i': 0},
                 {'line': line, 'i': 0},
@@ -429,6 +433,10 @@ function checkIndent(filePath, useTabs, tabLength, text) {
             last_reported = false;
             continue;
         }
+
+        // ignore non double slash (//) comments
+        if (inScope(t, 'comment') && !t.value.startsWith('//'))
+            continue;
 
         // allows comment to be over indented, if it ends a block
         if (inScope(t, 'comment') && nextTokIs(toks, first_tok.line, first_tok.i,'}')) {
