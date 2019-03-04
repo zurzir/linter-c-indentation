@@ -1,4 +1,5 @@
 'use babel';
+
 const l = console.log;
 
 // lines must be an array of strings containing the lines
@@ -75,16 +76,18 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
         return false;
     }
 
-    function getNextToken(line, i) {
+    function getNextTokenValue(line, i) {
+        var firstIdx = i + 1;
         for (var nextLine = line; nextLine < allTokens.length; nextLine++) {
-            for (var nextIdx = i + 1; nextIdx < allTokens[nextLine].length; nextIdx++) {
-                nextToken = allTokens[nextLine][nextIdx];
+            for (var nextIdx = firstIdx; nextIdx < allTokens[nextLine].length; nextIdx++) {
+                var nextToken = allTokens[nextLine][nextIdx];
                 if (inScope(nextToken, 'comment'))
                     continue;
-                if (gettoken.value(nextToken).trim() == '')
+                if (nextToken.value.trim() == '')
                     continue;
-                return nextToken;
+                return nextToken.value;
             }
+            firstIdx = 0;
         }
         return null;
     }
@@ -123,7 +126,6 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
     }
 
     function setLevels() {
-        l(3); 
         // states
         var curLevel = 0;
         var parenthesesAfterCond = -1; // number of paren after condition; -1 means no condition
@@ -136,8 +138,9 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
         for (var line = 0; line < allTokens.length; line++) {
 
             // for each token in line
-            for (var token of allTokens[line]) {
-                let nextToken = getNextToken(token);
+            for (var i = 0; i < allTokens[line].length; i++) {
+                var token = allTokens[line][i];
+                let nextTokenValue = getNextTokenValue(line, i);
 
                 // token takes current level
                 token.level = curLevel;
@@ -185,9 +188,9 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
                         if (condStack.num() > 0) {
 
                             nextIsDoWhile = condStack.last() == 'do'
-                                            && nextToken.value == 'while';
+                                            && nextTokenValue == 'while';
 
-                            if (nextToken.value == 'else' || nextIsDoWhile) {
+                            if (nextTokenValue == 'else' || nextIsDoWhile) {
                                 curLevel -= 1;
                                 condStack.del();
                             } else {
@@ -201,7 +204,7 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
                         }
 
                     } else if (token.value == ';' && condStack.num() > 0 && parenthesesAfterCond == -1) {
-                        if (nextToken.value == 'else') {
+                        if (nextTokenValue == 'else') {
                             curLevel -= 1;
                             condStack.del();
                         } else {
@@ -231,8 +234,7 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
                             if (parenthesesAfterCond == 0) {
                                 // and the statement is empty
                                 let lastCond = condStack.last();
-                                if (nextToken !== null
-                                    && nextToken.value == ';'
+                                if (nextTokenValue == ';'
                                     && ['if', 'while', 'for', 'else', 'switch'].includes(lastCond))
                                 {
                                     pushNote(getTokenLocation(line, token), 'Cuidado: bloco vazio',
@@ -311,10 +313,31 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
                     // check if the first tok is inside a parentheses expression
                     let isOpeningPar = ['[', '('].includes(token.value) && numberParentheses == 1;
                     let isClosingPar = [']', ')'].includes(token.value) && numberParentheses == 0;
-                    token.inparen = (!isOpeningPar && num_paren > 0) || isClosingPar
-                    token.nextToken = nextToken;
+                    token.inparen = (!isOpeningPar && numberParentheses > 0) || isClosingPar
+                    token.nextTokenValue = nextTokenValue;
                 }
             }
+        }
+
+        // normalize levels
+        for (var line = firstTokens.length - 1, lastLevel = 0, lastValue = '';
+            line >= 0; line--) {
+            // creates dummy token for each empty line; such tokens get level of next line token
+            if (!firstTokens[line]) {
+                firstTokens[line] = {
+                    value: '',
+                    startIndex: 0,
+                    endIndex: 0,
+                    level: lastLevel
+                };
+            }
+
+            // comments gets level of next line token
+            if (firstTokens[line].value == '//' && lastValue != '')
+                firstTokens[line].level = firstTokens[line + 1].level;
+
+            lastLevel = firstTokens[line].level;
+            lastValue = firstTokens[line].value;
         }
     }
 
@@ -323,7 +346,9 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
         var lastIndentLevel = 0;
         var lastErrorReported = false; // do not report errors for consecutive lines
 
-        for (line = 0; line < lines.length; line++) {
+        for (var line = 0; line < lines.length; line++) {
+            // the first token in the line
+            let firstToken = firstTokens[line];
             let lineText = lines[line];
 
             // ignores problems on empty lines
@@ -339,9 +364,6 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
             if (suggestedIndent < 0)
                 suggestedIndent = 0;
             lastIndentLevel = indentLevel;
-
-            // the first token in the line
-            let firstToken = firstTokens[line]
 
             // checks tab/space
             if (!inScope(firstToken, 'comment')) {
@@ -402,7 +424,7 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
                 continue;
 
             // allows comment to be over indented, if it ends a block
-            if (inScope(firstToken, 'comment') && firstToken.nextToken.value == '}') {
+            if (inScope(firstToken, 'comment') && firstToken.nextTokenValue == '}') {
                 // could be overindent by one level
                 if(indentLevel == suggestedIndent + 1) {
                     lastIndentLevel--;

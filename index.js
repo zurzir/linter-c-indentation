@@ -2,7 +2,6 @@
 
 import {checkIndent} from './checkIndent.js'
 
-// eslint-disable-next-line
 const l = console.log;
 
 var grammar;
