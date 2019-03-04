@@ -1,11 +1,10 @@
-'use babel';
-
 const l = console.log;
 
 // lines must be an array of strings containing the lines
 // allTokens must be an array of arrays of tokens,
 // each token is { startIndex, endIndex, value , scopes}
-export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
+// scopes is an array of textmate scopes
+module.exports.checkIndent = function(filePath, useTabs, tabLength, lines, allTokens) {
     let notes = [];
     let firstTokens = Array(allTokens.length);
 
@@ -41,7 +40,7 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
         }
     }
 
-    function getSpaceTabeLevels(text, tabLength) {
+    function getSpaceTabLevels(text, tabLength) {
         var spaceInARow = 0;
         var tabLevel = 0;
         var spaceLevel = 0;
@@ -63,7 +62,7 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
     }
 
     function getIndentLevel(text, tabLength) {
-        let { tabLevel, spaceLevel, remainingSpaces } = getSpaceTabeLevels(text, tabLength);
+        let { tabLevel, spaceLevel, remainingSpaces } = getSpaceTabLevels(text, tabLength);
         let indentLevel = tabLevel + spaceLevel;
         return { indentLevel, remainingSpaces };
     }
@@ -345,6 +344,7 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
         // check each line
         var lastIndentLevel = 0;
         var lastErrorReported = false; // do not report errors for consecutive lines
+        var lastFirstTokenLevel = 0;
 
         for (var line = 0; line < lines.length; line++) {
             // the first token in the line
@@ -356,9 +356,12 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
                 continue;
 
             // calculates suggested and real indent
-            var diff = line == 0 ? firstTokens[0].level : firstTokens[line].level - firstTokens[line - 1].level;
+            var diff = firstToken.level - lastFirstTokenLevel;
+            lastFirstTokenLevel = firstToken.level
             let { indentLevel, remainingSpaces } = getIndentLevel(lineText, tabLength);
             var suggestedIndent = diff + lastIndentLevel;
+
+            // l(line+1, indentLevel, suggestedIndent);
 
             // this makes thing less worse...
             if (suggestedIndent < 0)
@@ -420,8 +423,10 @@ export function checkIndent(filePath, useTabs, tabLength, lines, allTokens) {
             }
 
             // ignore comments that do not start with //
-            if (inScope(firstToken, 'comment') && !firstToken.value.startsWith('//'))
+            if (inScope(firstToken, 'comment') && !firstToken.value.startsWith('//')) {
+                lastIndentLevel = suggestedIndent;
                 continue;
+            }
 
             // allows comment to be over indented, if it ends a block
             if (inScope(firstToken, 'comment') && firstToken.nextTokenValue == '}') {
